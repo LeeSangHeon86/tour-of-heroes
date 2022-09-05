@@ -5,6 +5,7 @@ import { HEROES } from '../mock';
 import { Hero } from '../model/data';
 import { MessageService } from './message.service';
 import { catchError, map, tap } from 'rxjs/operators';
+import { HSModel } from '../model';
 
 @Injectable({
   providedIn: 'root',
@@ -14,7 +15,7 @@ export class HeroService {
 
   constructor(
     private messageService: MessageService,
-    private httpClient: HttpClient
+    private http: HttpClient
   ) {}
 
   private log(message: string) {
@@ -25,29 +26,12 @@ export class HeroService {
    * 히어로 데이터 목록 가져오기
    * @returns
    */
-  // client : mock에서 heroes 데이터 가져오기
-  // getHeroes(): Observable<Hero[]> {
-  //   const heroes = of(HEROES);
-  //   this.messageService.add('HeroService : fetched heroes(데이터를 불러옴)');
-  //   return heroes;
-  // }
-
-  // server : 서버에서 heroes 데이터 가져오기
   getHeroes(): Observable<Hero[]> {
-    return this.httpClient.get<Hero[]>(this.heroesUrl).pipe(
+    return this.http.get<Hero[]>(this.heroesUrl).pipe(
       tap((_) => this.log('fetched heroes')),
       catchError(this.handleError<Hero[]>('getHeroes', []))
     );
   }
-
-  /** client :  mock에서 id 값을 가지고 hero 데이터 가져오기 */
-  // getHero(id: number): Observable<Hero> {
-  //   // TS컴파일러한테 HEROES.find(h => h.id === id)의 결과 값이
-  //   // null이나 undefined가 나올리 없으니까 에러 내지말고 그냥 넘어가달라는 의미입니다
-  //   const hero = HEROES.find((item) => item.id === id)!;
-  //   this.messageService.add(`HeroService : fetched hero id=${id}`);
-  //   return of(hero);
-  // }
 
   /**
    * 히어로 데이터 Id로 검색하여 가져오기
@@ -57,7 +41,7 @@ export class HeroService {
    */
   getHero(id: number): Observable<Hero> {
     const url = `${this.heroesUrl}/${id}`;
-    return this.httpClient.get<Hero>(url).pipe(
+    return this.http.get<Hero>(url).pipe(
       tap((_) => this.log(`fetched hero id= ${id}`)),
       catchError(this.handleError<Hero>(`getHero id=${id}`))
     );
@@ -90,7 +74,7 @@ export class HeroService {
    */
 
   updateHero(hero: Hero): Observable<any> {
-    return this.httpClient.put(this.heroesUrl, hero, this.httpOptions).pipe(
+    return this.http.put(this.heroesUrl, hero, this.httpOptions).pipe(
       tap((_) => this.log(`updated hero id=${hero.id}`)),
       catchError(this.handleError<any>('updateHero'))
     );
@@ -99,4 +83,34 @@ export class HeroService {
   httpOptions = {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
   };
+
+  /**
+   * 히어로 데이터 추가하기
+   * @param hero
+   * @returns
+   */
+  addHero(hero: HSModel.Hero): Observable<HSModel.Hero> {
+    return this.http
+      .post<HSModel.Hero>(this.heroesUrl, hero, this.httpOptions)
+      .pipe(
+        tap((newHero: HSModel.Hero) =>
+          this.log(`added hero w/ id=${newHero.id}`)
+        ),
+        catchError(this.handleError<HSModel.Hero>(`addHero`))
+      );
+  }
+
+  /**
+   * 히어로 데이터 삭제하기
+   * @param id
+   * @returns
+   */
+  deleteHero(id: number): Observable<HSModel.Hero> {
+    const url = `${this.heroesUrl}/${id}`;
+
+    return this.http.delete<HSModel.Hero>(url, this.httpOptions).pipe(
+      tap((_) => this.log(`deleted hero id=${id}`)),
+      catchError(this.handleError<Hero>('deleteHero'))
+    );
+  }
 }
