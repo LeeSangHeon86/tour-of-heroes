@@ -113,6 +113,11 @@ export class HeroService {
     );
   }
 
+  /**
+   * 히어로 검색하기s
+   * @param term
+   * @returns
+   */
   searchHeroes(term: string): Observable<HSModel.Hero[]> {
     if (!term.trim()) {
       return of();
